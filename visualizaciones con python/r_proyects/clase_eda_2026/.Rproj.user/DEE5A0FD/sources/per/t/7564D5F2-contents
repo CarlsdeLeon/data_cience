@@ -1,0 +1,121 @@
+---
+title: "Untitled"
+format: 
+  html:
+    toc: true
+    toc-depth: 3
+    number-section: true
+    code-fold: true
+    code-tools: true
+    theme: cosmo
+    highlight: tango
+  pdf:
+    toc: true
+    number-sections: true
+editor: visual
+execute: 
+  echo: true
+  warning: false
+  message: false
+  cache: true
+---
+
+# Configuracion inicial
+
+```{r}
+# Cargar librerias R
+library(tidyverse)
+library(ggplot2)
+library(naniar)
+library(mice)
+library(corrplot)
+library(here)
+
+# Configuraciones
+options(scipen = 999)
+theme_set(theme_minimal())
+
+# Cargar datos
+datos_raw <- readRDS(here("data/datos_raw.rds"))
+datos_median <- readRDS(here("data/datos_median.rds"))
+datos_regresion<- readRDS(here("data/datos_regresion.rds"))
+datos_mice <- readRDS(here("data/datos_mice.rds"))
+datos_winsor <- readRDS(here("data/datos_winsor.rds"))
+
+mostrar_grafico <- function(g)
+{
+  print(g)
+}  
+
+
+
+
+```
+
+##Analisis exploratorio
+
+```{r}
+#| label: exploracion-inicial
+#| fig.cap: "proporcion de valores faltantes por variables"
+#| fig.width: 10
+#| fig.height: 6
+
+#resumen de datos
+summary(datos_raw)
+
+#Visualizacion de faltantes
+mostrar_grafico(
+  gg_miss_var(datos_raw) +
+    labs(title = "Valores faltantes por variable") +
+    theme_minimal()
+)
+```
+
+##imputacion de datos \### comprobacion de metodos
+
+```{r}
+#| label: comparacion-imputacion
+#| fig.width: 12
+#| fig.height: 8
+
+# Comparar distribuciones
+par(mfrow = c(2,2))
+hist(datos_raw$edad, main = "Original", col="lightblue")
+hist(datos_median$edad, main = "Mediana", col="lightgreen")
+hist(datos_regresion$edad, main = "Regresión", col="lightyellow")
+hist(datos_mice$edad, main = "MICE", col="lightpink")
+```
+
+```{r}
+#| label: exploracion-inicial
+#| fig.cap: "proporcion de valores faltantes por variables"
+#| fig.width: 10
+#| fig.height: 6
+
+#boxplot comparativo
+boxplot(datos_mice$ingreso, datos_winsor$ingreso,
+        names = c("Original", "winsorizado"),
+        main = "Compraracion de Ingreso",
+        col = c("lightblue", "lightgreen")
+        )
+
+```
+
+```{r}
+#| label: exploracion-inicial
+#| echo: false
+
+cat("=== CONCLUSIONES DEL ANALISIS === \n\n")
+cat("1. Datos faltantes:\n")
+cat("    - Edad: MCAR (", sum(is.na(datos_raw$edad)), "valores)\n")
+cat("    - Satisfaccion MAR (", sum(is.na(datos_raw$satisfaccion)), "valores)\n\n")
+
+cat("2. Metodos de imputacions:\n")
+cat("    - Mediana : Simple y rapida")
+cat("    - Regresion: Considera relaciones\n")
+cat("    - MICE: Mas sofisticado, captura patrones complejos\n\n")
+
+cat("3. Outliers:\n")
+cat("    - Detectados en ingreso\n")
+cat("    - Tratamiento: Winsorizacion al 5% y 95%\n")
+```

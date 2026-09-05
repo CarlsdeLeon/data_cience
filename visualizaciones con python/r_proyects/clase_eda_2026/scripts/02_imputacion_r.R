@@ -1,0 +1,50 @@
+# 02_imputacion_r.R
+# Metodos de imputacion para valores faltanntes
+
+library(tidyverse)
+library(mice)
+library(naniar)
+library(here)
+
+# Cargar Datos
+datos <- readRDS(here("data/datos_raw.rds"))
+
+cat("=== IMPUTACION D EVALORES FALTANTES ===\n\n")
+
+# 1. Inpuracion por media
+cat("1. Inputacion por mediana...\n")
+
+datos_median <- datos
+for (col in names(datos_median)){
+  if(is.numeric(datos_median[[col]])){
+    datos_median[[col]][is.na(datos_median[[col]])]<-
+      median(datos_median[[col]],na.rm = TRUE)
+  }
+}
+saveRDS(datos_median, here("data/datos_median.rds"))
+cat("Completado\n")
+
+# 2. Inputacion por regresion
+cat("2. Inputacion por regresion...\n")
+datos_regresion <- datos
+modelo_edad <- lm(edad ~ ingreso + educacion + experiencia, data = datos)
+indices_na_edad <- which(is.na(datos_regresion$edad))
+if (length(indices_na_edad) > 0){
+  datos_regresion$edad[indices_na_edad] <-
+    predict(modelo_edad, newdata = datos_regresion[indices_na_edad, ])
+}
+saveRDS(datos_regresion, here("data/datos_regresion.rds"))
+cat("Completado\n")
+
+saveRDS(datos_regresion, here('data/datos_regresion.rds'))
+cat("Completado\n")
+
+# 3. Inputacion por MICE
+cat("3. Imputacion por MICE\n")
+imputaciones <- mice(datos, m=5, method = 'pmm', amxit = 50, seed = 123, printFlag = FALSE)
+
+datos_mice <- complete (imputaciones, 1)
+saveRDS(datos_mice, here('data/datos_mice.rds'))
+cat("completa\n")
+
+cat("Todas las imputaciones de han completado\n")
