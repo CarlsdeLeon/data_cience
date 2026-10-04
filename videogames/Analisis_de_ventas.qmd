@@ -1,6 +1,6 @@
 ---
 title: "Análisis Descriptivo y Diagnóstico de Ventas de Videojuegos con Python"
-author: "Nombre Apellido"
+author: "Carlos de Leon"
 date: today
 format:
   pdf:
